@@ -37,3 +37,32 @@ func TestPlannerPreservesUnknownSKUError(t *testing.T) {
 		t.Fatalf("Plan() error = %v, want unknown SKU", err)
 	}
 }
+
+func TestPlannerDoesNotPersistEmptyPlanBatch(t *testing.T) {
+	recorder := &recordingPlanStore{}
+	planner := NewPlanner(store.NewCatalog(nil), recorder)
+
+	plans, err := planner.Plan(context.Background(), nil)
+	if err != nil {
+		t.Fatalf("Plan() error = %v", err)
+	}
+	if len(plans) != 0 {
+		t.Fatalf("Plan() = %#v, want no plans", plans)
+	}
+	if recorder.saveCalls != 0 {
+		t.Fatalf("Save() calls = %d, want 0 for an empty plan batch", recorder.saveCalls)
+	}
+}
+
+type recordingPlanStore struct {
+	saveCalls int
+}
+
+func (s *recordingPlanStore) Save(_ context.Context, _ []domain.ReplenishmentPlan) error {
+	s.saveCalls++
+	return nil
+}
+
+func (s *recordingPlanStore) Snapshot() []domain.ReplenishmentPlan {
+	return nil
+}
