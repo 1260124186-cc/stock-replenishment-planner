@@ -32,3 +32,19 @@ func TestLoadInputAndWritePlans(t *testing.T) {
 		t.Fatalf("WritePlans() output = %s", output.String())
 	}
 }
+
+func TestLoadInputAppliesDefaultSafetyStock(t *testing.T) {
+	path := filepath.Join(t.TempDir(), "input.json")
+	input := `{"orders":[],"policies":[{"sku":"tea","minimum_stock":6,"reorder_multiple":5,"lead_time_days":1}]}`
+	if err := os.WriteFile(path, []byte(input), 0o600); err != nil {
+		t.Fatal(err)
+	}
+
+	loaded, err := LoadInput(path)
+	if err != nil {
+		t.Fatalf("LoadInput() error = %v", err)
+	}
+	if loaded.Policies[0].SafetyStock == nil || *loaded.Policies[0].SafetyStock != 6 {
+		t.Fatalf("loaded policy safety stock = %#v, want default 6", loaded.Policies[0].SafetyStock)
+	}
+}

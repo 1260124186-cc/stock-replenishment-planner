@@ -37,3 +37,19 @@ func TestPlannerPreservesUnknownSKUError(t *testing.T) {
 		t.Fatalf("Plan() error = %v, want unknown SKU", err)
 	}
 }
+
+func TestPlannerUsesDefaultSafetyStockForProgrammaticPolicy(t *testing.T) {
+	planner := NewPlanner(store.NewCatalog([]domain.ReorderPolicy{{
+		SKU: "tea", MinimumStock: 4, ReorderMultiple: 5,
+	}}), store.NewMemoryPlanStore())
+
+	plans, err := planner.Plan(context.Background(), []domain.OrderSignal{{
+		SKU: "tea", OnHand: 0, DailySales: 2, DaysOfCover: 1,
+	}})
+	if err != nil {
+		t.Fatalf("Plan() error = %v", err)
+	}
+	if len(plans) != 1 || plans[0].Quantity != 10 {
+		t.Fatalf("Plan() = %#v, want one quantity-10 plan", plans)
+	}
+}

@@ -18,10 +18,7 @@ type MemoryCatalog struct {
 func NewCatalog(policies []domain.ReorderPolicy) *MemoryCatalog {
 	catalog := &MemoryCatalog{policies: make(map[string]domain.ReorderPolicy, len(policies))}
 	for _, policy := range policies {
-		normalized, err := domain.NormalizePolicy(policy)
-		if err == nil {
-			catalog.policies[normalized.SKU] = normalized
-		}
+		catalog.policies[policy.SKU] = policy
 	}
 	return catalog
 }
