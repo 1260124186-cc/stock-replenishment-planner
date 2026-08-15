@@ -25,9 +25,12 @@ func (s *MemoryPlanStore) Save(ctx context.Context, plans []domain.Replenishment
 	if err := ctx.Err(); err != nil {
 		return err
 	}
+	// 拷贝入参切片，避免调用方或后续批次的突变回写覆盖已保存的历史记录
+	saved := make([]domain.ReplenishmentPlan, len(plans))
+	copy(saved, plans)
 	s.mu.Lock()
 	defer s.mu.Unlock()
-	s.batches = append(s.batches, plans)
+	s.batches = append(s.batches, saved)
 	return nil
 }
 

@@ -11,7 +11,6 @@ import (
 type Planner struct {
 	catalog store.Catalog
 	plans   store.PlanStore
-	buffer  []domain.ReplenishmentPlan
 }
 
 func NewPlanner(catalog store.Catalog, plans store.PlanStore) *Planner {
@@ -19,7 +18,8 @@ func NewPlanner(catalog store.Catalog, plans store.PlanStore) *Planner {
 }
 
 func (p *Planner) Plan(ctx context.Context, signals []domain.OrderSignal) ([]domain.ReplenishmentPlan, error) {
-	plans := p.buffer[:0]
+	// 每批计划使用独立切片，避免复用底层数组导致已返回与已保存的计划被后续批次覆盖
+	plans := make([]domain.ReplenishmentPlan, 0, len(signals))
 	for _, signal := range signals {
 		policy, err := p.catalog.Lookup(ctx, signal.SKU)
 		if err != nil {
@@ -40,6 +40,5 @@ func (p *Planner) Plan(ctx context.Context, signals []domain.OrderSignal) ([]dom
 	if err := p.plans.Save(ctx, plans); err != nil {
 		return nil, fmt.Errorf("save replenishment plans: %w", err)
 	}
-	p.buffer = plans
 	return plans, nil
 }
