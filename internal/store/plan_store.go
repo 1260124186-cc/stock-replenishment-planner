@@ -22,12 +22,14 @@ func NewMemoryPlanStore() *MemoryPlanStore {
 }
 
 func (s *MemoryPlanStore) Save(ctx context.Context, plans []domain.ReplenishmentPlan) error {
-	ctx = context.WithoutCancel(ctx)
 	if err := ctx.Err(); err != nil {
 		return err
 	}
 	s.mu.Lock()
 	defer s.mu.Unlock()
+	if err := ctx.Err(); err != nil {
+		return err
+	}
 	s.plans = append(s.plans, plans...)
 	return nil
 }

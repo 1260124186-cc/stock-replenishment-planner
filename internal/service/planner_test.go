@@ -52,3 +52,38 @@ func TestPlannerStopsWhenRequestContextIsCanceled(t *testing.T) {
 		t.Fatalf("Plan() error = %v, want context.Canceled", err)
 	}
 }
+
+func TestPlannerDoesNotPersistPlansWhenRequestIsCanceledDuringLookup(t *testing.T) {
+	safetyStock := 1
+	ctx, cancel := context.WithCancel(context.Background())
+	plans := store.NewMemoryPlanStore()
+	planner := NewPlanner(cancelingCatalog{
+		cancel: cancel,
+		policy: domain.ReorderPolicy{
+			SKU: "tea", MinimumStock: 1, ReorderMultiple: 1, SafetyStock: &safetyStock,
+		},
+	}, plans)
+
+	got, err := planner.Plan(ctx, []domain.OrderSignal{{
+		SKU: "tea", OnHand: 0, DailySales: 2, DaysOfCover: 1,
+	}})
+	if !errors.Is(err, context.Canceled) {
+		t.Fatalf("Plan() error = %v, want context.Canceled", err)
+	}
+	if got != nil {
+		t.Fatalf("Plan() = %#v, want no plans", got)
+	}
+	if snapshot := plans.Snapshot(); len(snapshot) != 0 {
+		t.Fatalf("persisted plans = %#v, want none", snapshot)
+	}
+}
+
+type cancelingCatalog struct {
+	cancel context.CancelFunc
+	policy domain.ReorderPolicy
+}
+
+func (c cancelingCatalog) Lookup(context.Context, string) (domain.ReorderPolicy, error) {
+	c.cancel()
+	return c.policy, nil
+}

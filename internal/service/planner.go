@@ -20,9 +20,16 @@ func NewPlanner(catalog store.Catalog, plans store.PlanStore) *Planner {
 func (p *Planner) Plan(ctx context.Context, signals []domain.OrderSignal) ([]domain.ReplenishmentPlan, error) {
 	plans := make([]domain.ReplenishmentPlan, 0, len(signals))
 	for _, signal := range signals {
-		policy, err := p.catalog.Lookup(context.WithoutCancel(ctx), signal.SKU)
+		if err := ctx.Err(); err != nil {
+			return nil, err
+		}
+
+		policy, err := p.catalog.Lookup(ctx, signal.SKU)
 		if err != nil {
 			return nil, fmt.Errorf("load reorder policy for %s: %w", signal.SKU, err)
+		}
+		if err := ctx.Err(); err != nil {
+			return nil, err
 		}
 
 		quantity := domain.RecommendedQuantity(signal, policy)
@@ -36,6 +43,9 @@ func (p *Planner) Plan(ctx context.Context, signals []domain.OrderSignal) ([]dom
 		})
 	}
 
+	if err := ctx.Err(); err != nil {
+		return nil, err
+	}
 	if err := p.plans.Save(ctx, plans); err != nil {
 		return nil, fmt.Errorf("save replenishment plans: %w", err)
 	}
