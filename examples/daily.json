@@ -1,0 +1,20 @@
+{
+  "orders": [
+    {
+      "sku": "tea",
+      "on_hand": 4,
+      "open_purchase": 0,
+      "daily_sales": 3,
+      "days_of_cover": 3
+    }
+  ],
+  "policies": [
+    {
+      "sku": "tea",
+      "minimum_stock": 6,
+      "reorder_multiple": 5,
+      "lead_time_days": 2,
+      "safety_stock": 4
+    }
+  ]
+}

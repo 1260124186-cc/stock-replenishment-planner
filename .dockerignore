@@ -1,0 +1,10 @@
+.git
+.private
+*.patch
+*.log
+*.out
+*.test
+bin/
+coverage/
+tmp/
+BUG_REPRO.md
