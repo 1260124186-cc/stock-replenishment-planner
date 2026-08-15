@@ -37,3 +37,30 @@ func TestPlannerPreservesUnknownSKUError(t *testing.T) {
 		t.Fatalf("Plan() error = %v, want unknown SKU", err)
 	}
 }
+
+func TestPlannerKeepsEarlierBatchStableAfterLaterPlan(t *testing.T) {
+	safetyStock := 1
+	plans := store.NewMemoryPlanStore()
+	planner := NewPlanner(store.NewCatalog([]domain.ReorderPolicy{{
+		SKU: "tea", MinimumStock: 1, ReorderMultiple: 1, SafetyStock: &safetyStock,
+	}}), plans)
+
+	first, err := planner.Plan(context.Background(), []domain.OrderSignal{{
+		SKU: "tea", OnHand: 0, DailySales: 2, DaysOfCover: 1,
+	}})
+	if err != nil {
+		t.Fatalf("first Plan() error = %v", err)
+	}
+	if _, err := planner.Plan(context.Background(), []domain.OrderSignal{{
+		SKU: "tea", OnHand: 0, DailySales: 5, DaysOfCover: 1,
+	}}); err != nil {
+		t.Fatalf("second Plan() error = %v", err)
+	}
+
+	if first[0].Quantity != 3 {
+		t.Fatalf("first plan quantity = %d, want 3 after later plan", first[0].Quantity)
+	}
+	if saved := plans.Snapshot(); len(saved) != 2 || saved[0].Quantity != 3 || saved[1].Quantity != 6 {
+		t.Fatalf("saved plans = %#v, want independent first and second batches", saved)
+	}
+}

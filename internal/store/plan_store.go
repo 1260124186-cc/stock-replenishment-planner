@@ -13,8 +13,8 @@ type PlanStore interface {
 }
 
 type MemoryPlanStore struct {
-	mu    sync.Mutex
-	plans []domain.ReplenishmentPlan
+	mu      sync.Mutex
+	batches [][]domain.ReplenishmentPlan
 }
 
 func NewMemoryPlanStore() *MemoryPlanStore {
@@ -27,12 +27,16 @@ func (s *MemoryPlanStore) Save(ctx context.Context, plans []domain.Replenishment
 	}
 	s.mu.Lock()
 	defer s.mu.Unlock()
-	s.plans = append(s.plans, plans...)
+	s.batches = append(s.batches, plans)
 	return nil
 }
 
 func (s *MemoryPlanStore) Snapshot() []domain.ReplenishmentPlan {
 	s.mu.Lock()
 	defer s.mu.Unlock()
-	return append([]domain.ReplenishmentPlan(nil), s.plans...)
+	var plans []domain.ReplenishmentPlan
+	for _, batch := range s.batches {
+		plans = append(plans, batch...)
+	}
+	return plans
 }
