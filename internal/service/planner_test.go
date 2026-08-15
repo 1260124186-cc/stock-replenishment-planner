@@ -37,3 +37,17 @@ func TestPlannerPreservesUnknownSKUError(t *testing.T) {
 		t.Fatalf("Plan() error = %v, want unknown SKU", err)
 	}
 }
+
+func TestPlannerReturnsErrorForInvalidProgrammaticPolicy(t *testing.T) {
+	safetyStock := 1
+	planner := NewPlanner(store.NewCatalog([]domain.ReorderPolicy{{
+		SKU: "tea", MinimumStock: 1, ReorderMultiple: 0, SafetyStock: &safetyStock,
+	}}), store.NewMemoryPlanStore())
+
+	_, err := planner.Plan(context.Background(), []domain.OrderSignal{{
+		SKU: "tea", OnHand: 0, DailySales: 2, DaysOfCover: 1,
+	}})
+	if err == nil {
+		t.Fatal("Plan() error = nil, want invalid policy error")
+	}
+}

@@ -32,3 +32,15 @@ func TestLoadInputAndWritePlans(t *testing.T) {
 		t.Fatalf("WritePlans() output = %s", output.String())
 	}
 }
+
+func TestLoadInputRejectsInvalidPolicy(t *testing.T) {
+	path := filepath.Join(t.TempDir(), "input.json")
+	input := `{"orders":[],"policies":[{"sku":"tea","minimum_stock":1,"reorder_multiple":0,"lead_time_days":1,"safety_stock":1}]}`
+	if err := os.WriteFile(path, []byte(input), 0o600); err != nil {
+		t.Fatal(err)
+	}
+
+	if _, err := LoadInput(path); err == nil {
+		t.Fatal("LoadInput() error = nil, want invalid policy error")
+	}
+}
