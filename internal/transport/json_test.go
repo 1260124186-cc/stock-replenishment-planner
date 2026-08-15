@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 
 	"github.com/zhangchengcheng/stock-replenishment-planner/internal/domain"
@@ -40,7 +41,11 @@ func TestLoadInputRejectsInvalidPolicy(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	if _, err := LoadInput(path); err == nil {
+	_, err := LoadInput(path)
+	if err == nil {
 		t.Fatal("LoadInput() error = nil, want invalid policy error")
+	}
+	if !strings.Contains(err.Error(), "validate policy 0") || !strings.Contains(err.Error(), "invalid limits") {
+		t.Fatalf("LoadInput() error = %v, want clear policy validation error", err)
 	}
 }

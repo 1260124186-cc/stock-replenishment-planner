@@ -3,6 +3,7 @@ package service
 import (
 	"context"
 	"errors"
+	"strings"
 	"testing"
 
 	"github.com/zhangchengcheng/stock-replenishment-planner/internal/domain"
@@ -40,14 +41,21 @@ func TestPlannerPreservesUnknownSKUError(t *testing.T) {
 
 func TestPlannerReturnsErrorForInvalidProgrammaticPolicy(t *testing.T) {
 	safetyStock := 1
+	plans := store.NewMemoryPlanStore()
 	planner := NewPlanner(store.NewCatalog([]domain.ReorderPolicy{{
 		SKU: "tea", MinimumStock: 1, ReorderMultiple: 0, SafetyStock: &safetyStock,
-	}}), store.NewMemoryPlanStore())
+	}}), plans)
 
 	_, err := planner.Plan(context.Background(), []domain.OrderSignal{{
 		SKU: "tea", OnHand: 0, DailySales: 2, DaysOfCover: 1,
 	}})
 	if err == nil {
 		t.Fatal("Plan() error = nil, want invalid policy error")
+	}
+	if !strings.Contains(err.Error(), "validate reorder policy for tea") || !strings.Contains(err.Error(), "invalid limits") {
+		t.Fatalf("Plan() error = %v, want clear policy validation error", err)
+	}
+	if snapshot := plans.Snapshot(); len(snapshot) != 0 {
+		t.Fatalf("persisted plans = %#v, want no plans after validation failure", snapshot)
 	}
 }
