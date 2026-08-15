@@ -36,6 +36,10 @@ func (p *Planner) Plan(ctx context.Context, signals []domain.OrderSignal) ([]dom
 		})
 	}
 
+	if len(plans) == 0 {
+		return plans, nil
+	}
+
 	if err := p.plans.Save(ctx, plans); err != nil {
 		return nil, fmt.Errorf("save replenishment plans: %w", err)
 	}

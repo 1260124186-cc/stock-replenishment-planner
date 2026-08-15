@@ -26,10 +26,10 @@ func (s *MemoryPlanStore) Save(ctx context.Context, plans []domain.Replenishment
 		return err
 	}
 	s.mu.Lock()
+	defer s.mu.Unlock()
 	if len(plans) == 0 {
 		return nil
 	}
-	defer s.mu.Unlock()
 	s.plans = append(s.plans, plans...)
 	return nil
 }
