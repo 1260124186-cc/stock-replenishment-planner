@@ -27,7 +27,7 @@ func (s *MemoryPlanStore) Save(ctx context.Context, plans []domain.Replenishment
 	}
 	s.mu.Lock()
 	defer s.mu.Unlock()
-	s.batches = append(s.batches, plans)
+	s.batches = append(s.batches, append([]domain.ReplenishmentPlan(nil), plans...))
 	return nil
 }
 

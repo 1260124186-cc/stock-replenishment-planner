@@ -11,7 +11,6 @@ import (
 type Planner struct {
 	catalog store.Catalog
 	plans   store.PlanStore
-	buffer  []domain.ReplenishmentPlan
 }
 
 func NewPlanner(catalog store.Catalog, plans store.PlanStore) *Planner {
@@ -19,7 +18,7 @@ func NewPlanner(catalog store.Catalog, plans store.PlanStore) *Planner {
 }
 
 func (p *Planner) Plan(ctx context.Context, signals []domain.OrderSignal) ([]domain.ReplenishmentPlan, error) {
-	plans := p.buffer[:0]
+	var plans []domain.ReplenishmentPlan
 	for _, signal := range signals {
 		policy, err := p.catalog.Lookup(ctx, signal.SKU)
 		if err != nil {
@@ -40,6 +39,5 @@ func (p *Planner) Plan(ctx context.Context, signals []domain.OrderSignal) ([]dom
 	if err := p.plans.Save(ctx, plans); err != nil {
 		return nil, fmt.Errorf("save replenishment plans: %w", err)
 	}
-	p.buffer = plans
 	return plans, nil
 }
