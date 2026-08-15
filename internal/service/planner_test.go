@@ -37,3 +37,18 @@ func TestPlannerPreservesUnknownSKUError(t *testing.T) {
 		t.Fatalf("Plan() error = %v, want unknown SKU", err)
 	}
 }
+
+func TestPlannerStopsWhenRequestContextIsCanceled(t *testing.T) {
+	safetyStock := 1
+	planner := NewPlanner(store.NewCatalog([]domain.ReorderPolicy{{
+		SKU: "tea", MinimumStock: 1, ReorderMultiple: 1, SafetyStock: &safetyStock,
+	}}), store.NewMemoryPlanStore())
+	ctx, cancel := context.WithCancel(context.Background())
+	cancel()
+
+	if _, err := planner.Plan(ctx, []domain.OrderSignal{{
+		SKU: "tea", OnHand: 0, DailySales: 2, DaysOfCover: 1,
+	}}); !errors.Is(err, context.Canceled) {
+		t.Fatalf("Plan() error = %v, want context.Canceled", err)
+	}
+}

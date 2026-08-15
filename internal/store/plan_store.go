@@ -22,6 +22,7 @@ func NewMemoryPlanStore() *MemoryPlanStore {
 }
 
 func (s *MemoryPlanStore) Save(ctx context.Context, plans []domain.ReplenishmentPlan) error {
+	ctx = context.WithoutCancel(ctx)
 	if err := ctx.Err(); err != nil {
 		return err
 	}
