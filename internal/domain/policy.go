@@ -10,8 +10,14 @@ func NormalizePolicy(policy ReorderPolicy) (ReorderPolicy, error) {
 	if policy.SKU == "" {
 		return ReorderPolicy{}, fmt.Errorf("policy SKU is required")
 	}
-	if policy.MinimumStock < 0 || policy.ReorderMultiple <= 0 || policy.LeadTimeDays < 0 {
-		return ReorderPolicy{}, fmt.Errorf("policy for %s has invalid limits", policy.SKU)
+	if policy.MinimumStock < 0 {
+		return ReorderPolicy{}, fmt.Errorf("policy for %s has negative minimum stock", policy.SKU)
+	}
+	if policy.ReorderMultiple <= 0 {
+		return ReorderPolicy{}, fmt.Errorf("policy for %s has non-positive reorder multiple", policy.SKU)
+	}
+	if policy.LeadTimeDays < 0 {
+		return ReorderPolicy{}, fmt.Errorf("policy for %s has negative lead time days", policy.SKU)
 	}
 	if policy.SafetyStock == nil {
 		defaultSafetyStock := policy.MinimumStock

@@ -27,6 +27,13 @@ func LoadInput(path string) (Input, error) {
 	if err := decoder.Decode(&input); err != nil {
 		return Input{}, fmt.Errorf("decode input: %w", err)
 	}
+	for i := range input.Policies {
+		normalized, err := domain.NormalizePolicy(input.Policies[i])
+		if err != nil {
+			return Input{}, fmt.Errorf("invalid policy: %w", err)
+		}
+		input.Policies[i] = normalized
+	}
 	return input, nil
 }
 

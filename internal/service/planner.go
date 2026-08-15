@@ -25,6 +25,11 @@ func (p *Planner) Plan(ctx context.Context, signals []domain.OrderSignal) ([]dom
 			return nil, fmt.Errorf("load reorder policy for %s: %w", signal.SKU, err)
 		}
 
+		policy, err = domain.NormalizePolicy(policy)
+		if err != nil {
+			return nil, fmt.Errorf("normalize reorder policy: %w", err)
+		}
+
 		quantity := domain.RecommendedQuantity(signal, policy)
 		if quantity == 0 {
 			continue
